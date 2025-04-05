@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import tempfile
@@ -14,7 +14,7 @@ from sqlalchemy.future import select
 from sqlalchemy import desc
 
 # Import database models
-from .logic.database import get_db, VideoAnalysis, init_db
+from .logic.database import get_db, VideoAnalysis, OperationStatus, init_db
 
 # Import Pydantic models
 from .logic.models import MealPlan
@@ -60,6 +60,20 @@ async def analyze_video(
 
     if not video.content_type or not video.content_type.startswith("video/"):
         raise HTTPException(status_code=400, detail="File must be a video")
+
+    # Set status to "false" at the beginning of processing
+    result = await db.execute(
+        select(OperationStatus).where(OperationStatus.operation_type == "video_analysis").limit(1)
+    )
+    status = result.scalars().first()
+    
+    if status:
+        status.is_done = "false"
+    else:
+        status = OperationStatus(operation_type="video_analysis", is_done="false")
+        db.add(status)
+    
+    await db.commit()
 
     # Save uploaded file temporarily
     with tempfile.NamedTemporaryFile(
@@ -142,10 +156,27 @@ async def analyze_video(
     if os.path.exists(temp_video_path):
         os.unlink(temp_video_path)
     
+    # Update status to "true" when processing is complete
+    status.is_done = "true"
+    await db.commit()
+    
     return response.parsed
 
 
-        
+
+@app.get("/is-done")
+async def is_done(db: AsyncSession = Depends(get_db)):
+    # Query the operation status table to check if video analysis is done
+    result = await db.execute(
+        select(OperationStatus).where(OperationStatus.operation_type == "video_analysis").limit(1)
+    )
+    status = result.scalars().first()
+
+    if not status:
+        # If no status exists, return false
+        return {"is_done": "false"}
+
+    return {"is_done": status.is_done}
 
 
 @app.get("/analysis", response_model=MealPlan)
@@ -161,3 +192,24 @@ async def get_latest_analysis(db: AsyncSession = Depends(get_db)):
 
     # Return the analysis_text directly which contains the meal plan
     return analysis.analysis_text
+
+
+@app.post("/set-status/{status}")
+async def set_status(status: str, db: AsyncSession = Depends(get_db)):
+    """Manually set the operation status (for testing)"""
+    if status not in ["true", "false"]:
+        raise HTTPException(status_code=400, detail="Status must be 'true' or 'false'")
+    
+    result = await db.execute(
+        select(OperationStatus).where(OperationStatus.operation_type == "video_analysis").limit(1)
+    )
+    operation_status = result.scalars().first()
+    
+    if operation_status:
+        operation_status.is_done = status
+    else:
+        operation_status = OperationStatus(operation_type="video_analysis", is_done=status)
+        db.add(operation_status)
+    
+    await db.commit()
+    return Response(status_code=200)
