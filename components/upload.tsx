@@ -47,7 +47,7 @@ export function Upload() {
     // Simulate upload and processing
     setTimeout(() => {
       setIsUploading(false)
-      window.location.href = "/results"
+      window.location.href = "/voice-analysis"
     }, 2000)
   }
 
@@ -68,9 +68,14 @@ export function Upload() {
           <h3 className="text-xl font-semibold">Upload your cooking video</h3>
           <p className="text-gray-500 mb-4">Drag and drop your video here, or click to browse</p>
 
-          <label className="cursor-pointer">
-            <input type="file" accept="video/*" className="hidden" onChange={handleFileChange} />
-            <Button variant="outline" className="gap-2">
+          <label htmlFor="file-upload" className="cursor-pointer">
+            <input id="file-upload" type="file" accept="video/*" className="hidden" onChange={handleFileChange} />
+            <Button
+              variant="outline"
+              className="gap-2"
+              type="button"
+              onClick={() => document.getElementById("file-upload")?.click()}
+            >
               <UploadIcon className="h-4 w-4" />
               Browse files
             </Button>

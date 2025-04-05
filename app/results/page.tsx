@@ -4,6 +4,8 @@ import { SupermarketOptions } from "@/components/supermarket-options"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { MealPlanByDays } from "@/components/meal-plan-by-days"
+import { TodaysMeal } from "@/components/todays-meal"
 
 export default function ResultsPage() {
   return (
@@ -28,7 +30,7 @@ export default function ResultsPage() {
               <path d="M16 16h.01" />
               <path d="M2 16l20 6-6-20A20 20 0 0 0 2 16" />
             </svg>
-            <h1 className="text-xl font-bold text-gray-800">EcoDish</h1>
+            <h1 className="text-xl font-bold text-gray-800">MealGenius</h1>
           </div>
           <Button variant="ghost" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
@@ -56,19 +58,26 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <MealSuggestions />
-          <div>
-            <ShoppingList />
-            <SupermarketOptions />
-          </div>
+        {/* Today's Meal at the top */}
+        <TodaysMeal />
+
+        {/* Weekly Meal Plan */}
+        <MealPlanByDays />
+
+        {/* Shopping List (left) and Supermarket Options (right) */}
+        <div className="grid md:grid-cols-2 gap-8 mb-8">
+          <ShoppingList />
+          <SupermarketOptions />
         </div>
+
+        {/* Meal Suggestions at the bottom */}
+        <MealSuggestions />
       </main>
 
       <footer className="bg-gray-50 py-8 mt-20">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
-            <p className="text-gray-600">© 2025 EcoDish. All rights reserved.</p>
+            <p className="text-gray-600">© 2025 MealGenius. All rights reserved.</p>
             <div className="flex gap-4">
               <a href="#" className="text-gray-600 hover:text-green-600">
                 Terms
