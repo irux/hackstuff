@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Get database URL from environment
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("POSTGRES_URL_NO_SSL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
 
