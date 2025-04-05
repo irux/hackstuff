@@ -21,10 +21,8 @@ from .logic.models import MealPlan
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", None)
 
-# Load environment variables
 load_dotenv()
 
-# Configure Gemini API
 
 app = FastAPI(title="Vercel FastAPI")
 
