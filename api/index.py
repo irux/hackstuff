@@ -14,10 +14,10 @@ from sqlalchemy.future import select
 from sqlalchemy import desc
 
 # Import database models
-from database import get_db, VideoAnalysis, init_db
+from logic.database import get_db, VideoAnalysis, init_db
 
 # Import Pydantic models
-from models import MealPlan
+from logic.models import MealPlan
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", None)
 

@@ -1,5 +1,5 @@
 import asyncio
-from database import init_db
+from api.logic.database import init_db
 
 async def create_tables():
     """Initialize the database tables."""
