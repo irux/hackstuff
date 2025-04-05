@@ -1,6 +1,5 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, JSON
 from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy import Column, Integer, String, Text, DateTime, JSON
 import os
 from datetime import datetime
 from dotenv import load_dotenv
@@ -12,9 +11,9 @@ DATABASE_URL = os.getenv("POSTGRES_URL_NO_SSL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
 
-# Create async engine
-engine = create_async_engine(DATABASE_URL, echo=True)
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+# Create synchronous engine instead of async
+engine = create_engine(DATABASE_URL, echo=True)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
@@ -45,16 +44,15 @@ class OperationStatus(Base):
         return f"<OperationStatus {self.id}: {self.operation_type} - {self.is_done}>"
 
 
-async def get_db():
-    """Dependency for getting async DB session"""
-    async with async_session() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+def get_db():
+    """Dependency for getting DB session"""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
-async def init_db():
+def init_db():
     """Initialize the database with tables"""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    Base.metadata.create_all(bind=engine)

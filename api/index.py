@@ -9,9 +9,8 @@ from dotenv import load_dotenv
 from typing import Optional
 import shutil
 import json
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy import desc
+from sqlalchemy.orm import Session
+from sqlalchemy import select, desc
 
 # Import database models
 from .logic.database import get_db, VideoAnalysis, OperationStatus, init_db
@@ -37,8 +36,8 @@ app.add_middleware(
 
 # Initialize database tables on startup
 @app.on_event("startup")
-async def startup_db_client():
-    await init_db()
+def startup_db_client():
+    init_db()
 
 @app.get("/")
 async def root():
@@ -53,7 +52,7 @@ async def hello():
 @app.post("/analyze-video", response_model=MealPlan)
 async def analyze_video(
     video: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=500, detail="Gemini API key not configured")
@@ -62,10 +61,7 @@ async def analyze_video(
         raise HTTPException(status_code=400, detail="File must be a video")
 
     # Set status to "false" at the beginning of processing
-    result = await db.execute(
-        select(OperationStatus).where(OperationStatus.operation_type == "video_analysis").limit(1)
-    )
-    status = result.scalars().first()
+    status = db.query(OperationStatus).filter(OperationStatus.operation_type == "video_analysis").first()
     
     if status:
         status.is_done = "false"
@@ -73,7 +69,7 @@ async def analyze_video(
         status = OperationStatus(operation_type="video_analysis", is_done="false")
         db.add(status)
     
-    await db.commit()
+    db.commit()
 
     # Save uploaded file temporarily
     with tempfile.NamedTemporaryFile(
@@ -131,15 +127,12 @@ async def analyze_video(
 
         
     # Check if analysis already exists
-    result = await db.execute(
-        select(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).limit(1)
-    )
-    existing_analysis = result.scalars().first()
+    existing_analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
     
     # If analysis exists, delete it
     if existing_analysis:
-        await db.delete(existing_analysis)
-        await db.commit()
+        db.delete(existing_analysis)
+        db.commit()
     
     # Create new analysis
     analysis = VideoAnalysis(
@@ -150,27 +143,24 @@ async def analyze_video(
     )
     
     db.add(analysis)
-    await db.commit()
-    await db.refresh(analysis)
+    db.commit()
+    db.refresh(analysis)
 
     if os.path.exists(temp_video_path):
         os.unlink(temp_video_path)
     
     # Update status to "true" when processing is complete
     status.is_done = "true"
-    await db.commit()
+    db.commit()
     
     return response.parsed
 
 
 
 @app.get("/is-done")
-async def is_done(db: AsyncSession = Depends(get_db)):
+def is_done(db: Session = Depends(get_db)):
     # Query the operation status table to check if video analysis is done
-    result = await db.execute(
-        select(OperationStatus).where(OperationStatus.operation_type == "video_analysis").limit(1)
-    )
-    status = result.scalars().first()
+    status = db.query(OperationStatus).filter(OperationStatus.operation_type == "video_analysis").first()
 
     if not status:
         # If no status exists, return false
@@ -180,12 +170,9 @@ async def is_done(db: AsyncSession = Depends(get_db)):
 
 
 @app.get("/analysis", response_model=MealPlan)
-async def get_latest_analysis(db: AsyncSession = Depends(get_db)):
+def get_latest_analysis(db: Session = Depends(get_db)):
     """Get the most recent video analysis"""
-    result = await db.execute(
-        select(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).limit(1)
-    )
-    analysis = result.scalars().first()
+    analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
 
     if not analysis:
         raise HTTPException(status_code=404, detail="No analysis found")
@@ -195,15 +182,12 @@ async def get_latest_analysis(db: AsyncSession = Depends(get_db)):
 
 
 @app.post("/set-status/{status}")
-async def set_status(status: str, db: AsyncSession = Depends(get_db)):
+def set_status(status: str, db: Session = Depends(get_db)):
     """Manually set the operation status (for testing)"""
     if status not in ["true", "false"]:
         raise HTTPException(status_code=400, detail="Status must be 'true' or 'false'")
     
-    result = await db.execute(
-        select(OperationStatus).where(OperationStatus.operation_type == "video_analysis").limit(1)
-    )
-    operation_status = result.scalars().first()
+    operation_status = db.query(OperationStatus).filter(OperationStatus.operation_type == "video_analysis").first()
     
     if operation_status:
         operation_status.is_done = status
@@ -211,5 +195,5 @@ async def set_status(status: str, db: AsyncSession = Depends(get_db)):
         operation_status = OperationStatus(operation_type="video_analysis", is_done=status)
         db.add(operation_status)
     
-    await db.commit()
+    db.commit()
     return Response(status_code=200)
