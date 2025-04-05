@@ -15,8 +15,11 @@ if not DATABASE_URL:
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Create synchronous engine instead of async
-engine = create_engine(DATABASE_URL, echo=True)
+# Create synchronous engine instead of async, explicitly using psycopg2
+engine = create_engine(
+    DATABASE_URL, 
+    echo=True,
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

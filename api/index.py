@@ -16,7 +16,7 @@ from sqlalchemy import select, desc
 from .logic.database import get_db, VideoAnalysis, OperationStatus, init_db
 
 # Import Pydantic models
-from .logic.models import MealPlan
+from .logic.models import MealPlan, SchemaMealPlan
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", None)
 
@@ -49,7 +49,7 @@ async def hello():
     return {"message": "Hello World"}
 
 
-@app.post("/analyze-video", response_model=MealPlan)
+@app.post("/api/py/analyze-video", response_model=MealPlan)
 async def analyze_video(
     video: UploadFile = File(...),
     db: Session = Depends(get_db),
@@ -60,17 +60,6 @@ async def analyze_video(
     if not video.content_type or not video.content_type.startswith("video/"):
         raise HTTPException(status_code=400, detail="File must be a video")
 
-    # Set status to "false" at the beginning of processing
-    status = db.query(OperationStatus).filter(OperationStatus.operation_type == "video_analysis").first()
-    
-    if status:
-        status.is_done = "false"
-    else:
-        status = OperationStatus(operation_type="video_analysis", is_done="false")
-        db.add(status)
-    
-    db.commit()
-
     # Save uploaded file temporarily
     with tempfile.NamedTemporaryFile(
         delete=False, suffix=os.path.splitext(video.filename)[1]
@@ -78,7 +67,6 @@ async def analyze_video(
         shutil.copyfileobj(video.file, temp_video)
         temp_video_path = temp_video.name
         
-
    
     # Initialize Gemini client
     client = genai.Client(api_key=GEMINI_API_KEY)
@@ -90,12 +78,14 @@ async def analyze_video(
     
     # Define the output structure - now in the prompt
     prompt = """
-    Analyze this video showing food items and create a meal plan.
+    Analyze this video showing food items and create a simple meal plan.
     
     Based on the food items visible in the video, generate:
-    1. Recipes with detailed ingredients and instructions for the meal plans. Meal plans should be for the whole week. Monday to Sunday.
-    2. A complete shopping list with all required ingredients for the meal plans if you don't have the ingredients in your kitchen. Which are not in the video.
+    1. ONE meal per day for each day of the week (Monday to Sunday)
+    2. For each meal, provide a simple recipe with ingredients list and basic instructions
+    3. A shopping list with any additional ingredients needed that weren't shown in the video
     
+    Keep everything simple and straightforward.
     """
     
     # Create content with video data
@@ -121,11 +111,13 @@ async def analyze_video(
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
             temperature=0,
-            response_schema=MealPlan
+            response_schema=SchemaMealPlan
         )
     )
+    
+    # Convert SchemaMealPlan to MealPlan format (which has defaults)
+    meal_plan_data = response.parsed.model_dump()
 
-        
     # Check if analysis already exists
     existing_analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
     
@@ -139,7 +131,7 @@ async def analyze_video(
         filename=video.filename,
         content_type=video.content_type,
         prompt=prompt,
-        analysis_text=response.parsed.model_dump_json(),
+        analysis_text=json.dumps(meal_plan_data),
     )
     
     db.add(analysis)
@@ -149,15 +141,12 @@ async def analyze_video(
     if os.path.exists(temp_video_path):
         os.unlink(temp_video_path)
     
-    # Update status to "true" when processing is complete
-    status.is_done = "true"
-    db.commit()
-    
-    return response.parsed
+    # Convert back to MealPlan object
+    return MealPlan.model_validate(meal_plan_data)
 
 
 
-@app.get("/is-done")
+@app.get("/api/py/is-done")
 def is_done(db: Session = Depends(get_db)):
     # Query the operation status table to check if video analysis is done
     status = db.query(OperationStatus).filter(OperationStatus.operation_type == "video_analysis").first()
@@ -169,19 +158,19 @@ def is_done(db: Session = Depends(get_db)):
     return {"is_done": status.is_done}
 
 
-@app.get("/analysis", response_model=MealPlan)
+@app.get("/api/py/analysis", response_model=MealPlan)
 def get_latest_analysis(db: Session = Depends(get_db)):
     """Get the most recent video analysis"""
     analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
-
+    
     if not analysis:
         raise HTTPException(status_code=404, detail="No analysis found")
 
     # Return the analysis_text directly which contains the meal plan
-    return analysis.analysis_text
+    return MealPlan.model_validate_json(analysis.analysis_text)
 
 
-@app.post("/set-status/{status}")
+@app.post("/api/py/set-status/{status}")
 def set_status(status: str, db: Session = Depends(get_db)):
     """Manually set the operation status (for testing)"""
     if status not in ["true", "false"]:
@@ -197,3 +186,5 @@ def set_status(status: str, db: Session = Depends(get_db)):
     
     db.commit()
     return Response(status_code=200)
+
+
