@@ -11,6 +11,10 @@ DATABASE_URL = os.getenv("POSTGRES_URL_NO_SSL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
 
+# Fix the dialect prefix - SQLAlchemy requires postgresql:// not postgres://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 # Create synchronous engine instead of async
 engine = create_engine(DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
