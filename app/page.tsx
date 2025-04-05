@@ -25,15 +25,15 @@ export default function Home() {
               <path d="M16 16h.01" />
               <path d="M2 16l20 6-6-20A20 20 0 0 0 2 16" />
             </svg>
-            <h1 className="text-xl font-bold text-gray-800">MealGenius</h1>
+            <h1 className="text-xl font-bold text-gray-800">EcoDish</h1>
           </div>
-          <nav>
+          {/* <nav>
             <ul className="flex gap-6">
               <li className="text-gray-600 hover:text-green-600 transition-colors">How it works</li>
               <li className="text-gray-600 hover:text-green-600 transition-colors">Features</li>
               <li className="text-gray-600 hover:text-green-600 transition-colors">Pricing</li>
             </ul>
-          </nav>
+          </nav> */}
           <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
             Sign In
           </button>
@@ -42,7 +42,7 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-12">
         <section className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-800 mb-4">Turn Any Food Video Into Meal Plans</h2>
+          <h2 className="text-4xl font-bold text-gray-800 mb-4">Don't worry, eat happy</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
             Upload a cooking video and our AI will generate meal ideas and a shopping list for you in seconds.
           </p>
@@ -50,13 +50,12 @@ export default function Home() {
         </section>
 
         <Features />
-        <HowItWorks />
       </main>
 
       <footer className="bg-gray-50 py-8 mt-20">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
-            <p className="text-gray-600">© 2025 MealGenius. All rights reserved.</p>
+            <p className="text-gray-600">© 2025 EcoDish. All rights reserved.</p>
             <div className="flex gap-4">
               <a href="#" className="text-gray-600 hover:text-green-600">
                 Terms
