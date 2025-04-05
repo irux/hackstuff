@@ -1,11 +1,149 @@
-import { MealSuggestions } from "@/components/meal-suggestions"
 import { ShoppingList } from "@/components/shopping-list"
 import { SupermarketOptions } from "@/components/supermarket-options"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { MealPlanByDays } from "@/components/meal-plan-by-days"
-import { TodaysMeal } from "@/components/todays-meal"
+import { FeaturedRecipe } from "@/components/featured-recipe"
+import { RecipeList } from "@/components/recipe-list"
+
+// Sample data based on the provided schema
+const sampleData = {
+  shopping_list: {
+    items: [
+      { name: "milk", quantity: 1, unit: "liter" },
+      { name: "butter", quantity: 250, unit: "grams" },
+      { name: "lemon", quantity: 2, unit: "pieces" },
+      { name: "mayonnaise", quantity: 250, unit: "grams" },
+      { name: "mustard", quantity: 100, unit: "grams" },
+      { name: "fresh parsley", quantity: 1, unit: "bunch" },
+    ],
+  },
+  recipes: [
+    {
+      name: "Cheddar & Spinach Scrambled Eggs",
+      ingredients: [
+        { name: "eggs", quantity: 4, unit: "pieces" },
+        { name: "spinach", quantity: 50, unit: "grams" },
+        { name: "cheddar", quantity: 50, unit: "grams" },
+        { name: "milk", quantity: 0.25, unit: "liters" },
+        { name: "butter", quantity: 20, unit: "grams" },
+      ],
+      instructions: [
+        "Whisk eggs with milk, salt, and pepper.",
+        "Melt butter in a pan over medium heat.",
+        "Add spinach and cook until wilted.",
+        "Pour in eggs and gently scramble.",
+        "Add cheddar at the end and let melt before serving.",
+      ],
+      image: "/images/pexels-photo-1640771.jpeg",
+    },
+    {
+      name: "Chicken Caesar Wrap",
+      ingredients: [
+        { name: "chicken breast", quantity: 150, unit: "grams" },
+        { name: "lettuce", quantity: 40, unit: "grams" },
+        { name: "bacon", quantity: 2, unit: "slices" },
+        { name: "cheddar", quantity: 30, unit: "grams" },
+        { name: "tortilla wrap", quantity: 1, unit: "piece" },
+        { name: "mayonnaise", quantity: 1, unit: "tablespoon" },
+        { name: "mustard", quantity: 1, unit: "teaspoon" },
+        { name: "lemon", quantity: 0.5, unit: "piece" },
+      ],
+      instructions: [
+        "Cook chicken and bacon until crispy.",
+        "Mix mayo, mustard, and lemon juice for dressing.",
+        "Fill tortilla with sliced chicken, bacon, lettuce, cheddar, and dressing.",
+        "Roll up and serve.",
+      ],
+      image: "/placeholder.svg?height=192&width=384&text=Chicken+Caesar+Wrap",
+    },
+    {
+      name: "Creamy Chicken & Spinach Pasta",
+      ingredients: [
+        { name: "chicken breast", quantity: 200, unit: "grams" },
+        { name: "spinach", quantity: 50, unit: "grams" },
+        { name: "pasta", quantity: 150, unit: "grams" },
+        { name: "onion", quantity: 0.5, unit: "piece" },
+        { name: "garlic", quantity: 2, unit: "cloves" },
+        { name: "cheddar", quantity: 30, unit: "grams" },
+        { name: "butter", quantity: 20, unit: "grams" },
+        { name: "milk", quantity: 0.3, unit: "liters" },
+      ],
+      instructions: [
+        "Cook pasta.",
+        "Sauté garlic, onion, and chicken in butter.",
+        "Add spinach until wilted.",
+        "Add milk and cheese, stir until creamy.",
+        "Combine with pasta and serve.",
+      ],
+      image: "/placeholder.svg?height=192&width=384&text=Creamy+Pasta",
+    },
+    {
+      name: "Tomato Garlic Pasta with Parmesan",
+      ingredients: [
+        { name: "pasta", quantity: 150, unit: "grams" },
+        { name: "garlic", quantity: 3, unit: "cloves" },
+        { name: "tomato paste", quantity: 2, unit: "tablespoons" },
+        { name: "parmesan", quantity: 30, unit: "grams" },
+        { name: "olive oil", quantity: 1, unit: "tablespoon" },
+      ],
+      instructions: [
+        "Cook pasta.",
+        "Sauté garlic in olive oil, add tomato paste.",
+        "Add a splash of pasta water, stir into sauce.",
+        "Toss with pasta and serve with parmesan.",
+      ],
+      image: "/placeholder.svg?height=192&width=384&text=Tomato+Pasta",
+    },
+    {
+      name: "Bacon & Egg Breakfast Roll",
+      ingredients: [
+        { name: "eggs", quantity: 2, unit: "pieces" },
+        { name: "bacon", quantity: 2, unit: "slices" },
+        { name: "bread roll", quantity: 1, unit: "piece" },
+        { name: "butter", quantity: 10, unit: "grams" },
+      ],
+      instructions: [
+        "Fry bacon until crispy.",
+        "Scramble or fry eggs.",
+        "Toast bread roll with butter.",
+        "Assemble roll with bacon and egg.",
+      ],
+      image: "/placeholder.svg?height=192&width=384&text=Breakfast+Roll",
+    },
+    {
+      name: "Mushroom & Onion Omelette",
+      ingredients: [
+        { name: "eggs", quantity: 3, unit: "pieces" },
+        { name: "onion", quantity: 0.5, unit: "piece" },
+        { name: "champignons", quantity: 80, unit: "grams" },
+        { name: "butter", quantity: 15, unit: "grams" },
+        { name: "parsley", quantity: 1, unit: "tablespoon" },
+      ],
+      instructions: [
+        "Sauté mushrooms and onions in butter.",
+        "Whisk eggs and pour into pan.",
+        "Cook until set, fold and garnish with parsley.",
+      ],
+      image: "/placeholder.svg?height=192&width=384&text=Mushroom+Omelette",
+    },
+    {
+      name: "Cheddar & Onion Stuffed Quesadilla",
+      ingredients: [
+        { name: "cheddar", quantity: 50, unit: "grams" },
+        { name: "onion", quantity: 0.5, unit: "piece" },
+        { name: "tortilla wrap", quantity: 1, unit: "piece" },
+        { name: "butter", quantity: 10, unit: "grams" },
+      ],
+      instructions: [
+        "Sauté onion in butter.",
+        "Place cheddar and onion on one half of tortilla.",
+        "Fold and cook in pan until crispy and melted inside.",
+      ],
+      image: "/placeholder.svg?height=192&width=384&text=Quesadilla",
+    },
+  ],
+}
 
 export default function ResultsPage() {
   return (
@@ -52,26 +190,23 @@ export default function ResultsPage() {
             <div>
               <h2 className="text-2xl font-bold">Your Video Analysis Results</h2>
               <p className="text-gray-600">
-                Based on your uploaded cooking video, we've generated the following meal ideas and shopping list.
+                Based on your uploaded cooking video, we've generated the following recipe ideas and shopping list.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Today's Meal at the top */}
-        <TodaysMeal />
-
-        {/* Weekly Meal Plan */}
-        <MealPlanByDays />
+        {/* Featured Recipe */}
+        <FeaturedRecipe recipe={sampleData.recipes[0]} />
 
         {/* Shopping List (left) and Supermarket Options (right) */}
         <div className="grid md:grid-cols-2 gap-8 mb-8">
-          <ShoppingList />
+          <ShoppingList items={sampleData.shopping_list.items} />
           <SupermarketOptions />
         </div>
 
-        {/* Meal Suggestions at the bottom */}
-        <MealSuggestions />
+        {/* Recipe List */}
+        <RecipeList recipes={sampleData.recipes} />
       </main>
 
       <footer className="bg-gray-50 py-8 mt-20">

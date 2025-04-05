@@ -1,57 +1,86 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Check, Plus, Minus } from "lucide-react"
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 
-export function ShoppingList() {
-  const initialItems = [
-    { name: "Bell peppers (red and green)", category: "Vegetables", quantity: "2", checked: false },
-    { name: "Broccoli", category: "Vegetables", quantity: "1 head", checked: false },
-    { name: "Carrots", category: "Vegetables", quantity: "3", checked: false },
-    { name: "Onion", category: "Vegetables", quantity: "1 large", checked: false },
-    { name: "Garlic", category: "Vegetables", quantity: "4 cloves", checked: false },
-    { name: "Chicken breast", category: "Meat", quantity: "500g", checked: false },
-    { name: "Soy sauce", category: "Condiments", quantity: "3 tbsp", checked: false },
-    { name: "Olive oil", category: "Oils", quantity: "2 tbsp", checked: false },
-    { name: "Rice", category: "Grains", quantity: "2 cups", checked: false },
-    { name: "Pasta", category: "Grains", quantity: "500g", checked: false },
-    { name: "Mixed salad greens", category: "Vegetables", quantity: "200g", checked: false },
+// Define types based on the schema
+interface ShoppingItem {
+  name: string
+  quantity: number
+  unit: string
+  checked?: boolean
+}
+
+interface ShoppingListProps {
+  items?: ShoppingItem[]
+}
+
+export function ShoppingList({ items }: ShoppingListProps) {
+  // Use the provided items or fallback to sample data
+  const initialItems: ShoppingItem[] = items || [
+    { name: "milk", quantity: 1, unit: "liter", checked: false },
+    { name: "butter", quantity: 250, unit: "grams", checked: false },
+    { name: "lemon", quantity: 2, unit: "pieces", checked: false },
+    { name: "mayonnaise", quantity: 250, unit: "grams", checked: false },
+    { name: "mustard", quantity: 100, unit: "grams", checked: false },
+    { name: "fresh parsley", quantity: 1, unit: "bunch", checked: false },
+    { name: "eggs", quantity: 9, unit: "pieces", checked: false },
+    { name: "spinach", quantity: 100, unit: "grams", checked: false },
+    { name: "cheddar", quantity: 160, unit: "grams", checked: false },
+    { name: "chicken breast", quantity: 350, unit: "grams", checked: false },
+    { name: "lettuce", quantity: 40, unit: "grams", checked: false },
+    { name: "bacon", quantity: 4, unit: "slices", checked: false },
+    { name: "tortilla wrap", quantity: 2, unit: "pieces", checked: false },
+    { name: "pasta", quantity: 300, unit: "grams", checked: false },
+    { name: "onion", quantity: 2, unit: "pieces", checked: false },
+    { name: "garlic", quantity: 5, unit: "cloves", checked: false },
+    { name: "tomato paste", quantity: 2, unit: "tablespoons", checked: false },
+    { name: "parmesan", quantity: 30, unit: "grams", checked: false },
+    { name: "olive oil", quantity: 1, unit: "tablespoon", checked: false },
+    { name: "bread roll", quantity: 1, unit: "piece", checked: false },
+    { name: "champignons", quantity: 80, unit: "grams", checked: false },
   ]
 
-  const [items, setItems] = useState(initialItems)
+  const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>(
+    initialItems.map((item) => ({ ...item, checked: false })),
+  )
 
   const toggleItem = (index: number) => {
-    const newItems = [...items]
+    const newItems = [...shoppingItems]
     newItems[index].checked = !newItems[index].checked
-    setItems(newItems)
+    setShoppingItems(newItems)
   }
 
-  // Group items by category
-  const groupedItems: Record<string, typeof items> = {}
-  items.forEach((item) => {
-    if (!groupedItems[item.category]) {
-      groupedItems[item.category] = []
+  // Group items by category (we'll use the first letter as a simple grouping)
+  const groupedItems: Record<string, ShoppingItem[]> = {}
+  shoppingItems.forEach((item) => {
+    const firstLetter = item.name.charAt(0).toUpperCase()
+    if (!groupedItems[firstLetter]) {
+      groupedItems[firstLetter] = []
     }
-    groupedItems[item.category].push(item)
+    groupedItems[firstLetter].push(item)
   })
 
+  // Sort the keys alphabetically
+  const sortedKeys = Object.keys(groupedItems).sort()
+
   return (
-    <Card className="mb-8">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xl">Shopping List</CardTitle>
         <div className="text-sm text-gray-500">
-          {items.filter((item) => item.checked).length} of {items.length} items checked
+          {shoppingItems.filter((item) => item.checked).length} of {shoppingItems.length} items checked
         </div>
       </CardHeader>
       <CardContent>
-        {Object.entries(groupedItems).map(([category, categoryItems]) => (
-          <div key={category} className="mb-6">
-            <h3 className="font-medium text-gray-700 mb-2">{category}</h3>
+        {sortedKeys.map((key) => (
+          <div key={key} className="mb-6">
+            <h3 className="font-medium text-gray-700 mb-2">{key}</h3>
             <ul className="space-y-2">
-              {categoryItems.map((item, index) => {
-                const originalIndex = items.findIndex((i) => i === item)
+              {groupedItems[key].map((item, index) => {
+                const originalIndex = shoppingItems.findIndex((i) => i === item)
                 return (
                   <li
                     key={index}
@@ -68,9 +97,11 @@ export function ShoppingList() {
                       >
                         {item.checked && <Check className="h-3 w-3" />}
                       </button>
-                      <span>{item.name}</span>
+                      <span className="capitalize">{item.name}</span>
                     </div>
-                    <span className="text-sm text-gray-500">{item.quantity}</span>
+                    <span className="text-sm text-gray-500">
+                      {item.quantity} {item.unit}
+                    </span>
                   </li>
                 )
               })}

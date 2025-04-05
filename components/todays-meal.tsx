@@ -16,7 +16,7 @@ export function TodaysMeal() {
       servings: 2,
       difficulty: "Easy",
       tags: ["Breakfast", "High Protein"],
-      image: "/placeholder.svg?height=150&width=300&text=Avocado+Toast",
+      image: "/pexels-photo-1640771.jpeg?height=150&width=300&text=Avocado+Toast",
       description:
         "Start your day with creamy avocado spread on whole grain toast, topped with perfectly poached eggs.",
     },
@@ -26,7 +26,7 @@ export function TodaysMeal() {
       servings: 4,
       difficulty: "Easy",
       tags: ["Lunch", "Vegetarian"],
-      image: "/placeholder.svg?height=150&width=300&text=Stir+Fry",
+      image: "/pexels-photo-1640771.jpeg?height=150&width=300&text=Stir+Fry",
       description: "A colorful mix of fresh vegetables stir-fried with aromatic spices and served over steamed rice.",
     },
     {
@@ -35,7 +35,7 @@ export function TodaysMeal() {
       servings: 2,
       difficulty: "Medium",
       tags: ["Dinner", "High Protein"],
-      image: "/placeholder.svg?height=150&width=300&text=Salmon",
+      image: "/pexels-photo-1640771.jpeg?height=150&width=300&text=Salmon",
       description:
         "Tender salmon fillets baked to perfection alongside seasonal vegetables roasted with herbs and olive oil.",
     },
