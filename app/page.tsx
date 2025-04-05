@@ -25,7 +25,7 @@ export default function Home() {
               <path d="M16 16h.01" />
               <path d="M2 16l20 6-6-20A20 20 0 0 0 2 16" />
             </svg>
-            <h1 className="text-xl font-bold text-gray-800">MealGenius</h1>
+            <h1 className="text-xl font-bold text-gray-800">EcoDish</h1>
           </div>
 
           <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
@@ -49,7 +49,7 @@ export default function Home() {
       <footer className="bg-gray-50 py-8 mt-20">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
-            <p className="text-gray-600">© 2025 MealGenius. All rights reserved.</p>
+            <p className="text-gray-600">© 2025 EcoDish. All rights reserved.</p>
             <div className="flex gap-4">
               <a href="#" className="text-gray-600 hover:text-green-600">
                 Terms

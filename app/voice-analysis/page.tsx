@@ -13,15 +13,12 @@ export default function VoiceAnalysisPage() {
       <Card className="w-full max-w-md p-8 text-center">
         <main className="flex min-h-screen flex-col items-center justify-between p-24">
           <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
-            <h1 className="text-4xl font-bold mb-8 text-center">
-              ElevenLabs Conversational AI
+            <h1 className="text-4xl font-bold text-center">
+              EcoDish Voice Agent
             </h1>
             <Conversation />
           </div>
         </main>
-        <div className="text-sm text-gray-500 mt-8">
-          <p>Powered by 11 Labs Voice AI</p>
-        </div>
       </Card>
     </div>
   )
