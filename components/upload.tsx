@@ -65,7 +65,7 @@ export function Upload() {
           <div className="bg-green-100 p-4 rounded-full">
             <Video className="h-10 w-10 text-green-600" />
           </div>
-          <h3 className="text-xl font-semibold">Upload your cooking video</h3>
+          <h3 className="text-xl font-semibold">Upload your video</h3>
           <p className="text-gray-500 mb-4">Drag and drop your video here, or click to browse</p>
 
           <label htmlFor="file-upload" className="cursor-pointer">
