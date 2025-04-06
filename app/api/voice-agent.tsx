@@ -88,6 +88,15 @@ export function Conversation() {
     };
   }, [cleanupMediaStream]);
 
+  // Monitor conversation status changes and navigate to results when agent ends conversation
+  useEffect(() => {
+    if (conversation.status === 'disconnected' && !isStarting && mediaStream) {
+      console.log('Agent ended the conversation, navigating to results');
+      cleanupMediaStream();
+      router.push('/results');
+    }
+  }, [conversation.status, isStarting, mediaStream, cleanupMediaStream, router]);
+
   if (!isBrowserReady) {
     return (
       <div className="flex items-center justify-center min-h-screen">
