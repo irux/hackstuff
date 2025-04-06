@@ -16,7 +16,7 @@ from sqlalchemy import select, desc
 from .logic.database import get_db, VideoAnalysis, OperationStatus, init_db
 
 # Import Pydantic models
-from .logic.models import MealPlan, SchemaMealPlan
+from .logic.models import MealPlan
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", None)
 
@@ -54,94 +54,116 @@ async def analyze_video(
     video: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    if not GEMINI_API_KEY:
-        raise HTTPException(status_code=500, detail="Gemini API key not configured")
+    temp_video_path = None
+    try:
+        if not GEMINI_API_KEY:
+            raise HTTPException(status_code=500, detail="Gemini API key not configured")
 
-    if not video.content_type or not video.content_type.startswith("video/"):
-        raise HTTPException(status_code=400, detail="File must be a video")
+        if not video.content_type or not video.content_type.startswith("video/"):
+            raise HTTPException(status_code=400, detail="File must be a video")
 
-    # Save uploaded file temporarily
-    with tempfile.NamedTemporaryFile(
-        delete=False, suffix=os.path.splitext(video.filename)[1]
-    ) as temp_video:
-        shutil.copyfileobj(video.file, temp_video)
-        temp_video_path = temp_video.name
+        # Save uploaded file temporarily
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=os.path.splitext(video.filename)[1]
+        ) as temp_video:
+            shutil.copyfileobj(video.file, temp_video)
+            temp_video_path = temp_video.name
+            
+       
+        # Initialize Gemini client
+        client = genai.Client(api_key=GEMINI_API_KEY)
         
-   
-    # Initialize Gemini client
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    
-    # Read the video file and encode it
-    with open(temp_video_path, "rb") as f:
-        video_bytes = f.read()
-        video_base64 = base64.b64encode(video_bytes).decode("utf-8")
-    
-    # Define the output structure - now in the prompt
-    prompt = """
-    Analyze this video showing food items and create a simple meal plan.
-    
-    Based on the food items visible in the video, generate:
-    1. ONE meal per day for each day of the week (Monday to Sunday)
-    2. For each meal, provide a simple recipe with ingredients list and basic instructions
-    3. A shopping list with any additional ingredients needed that weren't shown in the video
-    
-    Keep everything simple and straightforward.
-    """
-    
-    # Create content with video data
-    contents = [
-        types.Content(
-            role="user",
-            parts=[
-                types.Part.from_text(text=prompt),
-                types.Part(
-                    inline_data=types.Blob(
-                        mime_type=video.content_type,
-                        data=video_bytes
-                    )
-                ),
-            ],
-        ),
-    ]
-    
-    # Generate content with temperature=0 and JSON response type
-    response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=contents,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            temperature=0,
-            response_schema=SchemaMealPlan
+        # Read the video file and encode it
+        with open(temp_video_path, "rb") as f:
+            video_bytes = f.read()
+            video_base64 = base64.b64encode(video_bytes).decode("utf-8")
+        
+        # Define the output structure - now in the prompt
+        prompt = """
+        Analyze this video showing food items and create a simple meal plan.
+        
+        Based on the food items visible in the video, generate:
+        1. ONE meal per day for each day of the week (Monday to Sunday)
+        2. For each meal, provide a simple recipe with ingredients list and basic instructions
+        3. A shopping list with any additional ingredients needed that weren't shown in the video
+        
+        Keep everything simple and straightforward.
+        """
+        
+        # Create content with video data
+        contents = [
+            types.Content(
+                role="user",
+                parts=[
+                    types.Part.from_text(text=prompt),
+                    types.Part(
+                        inline_data=types.Blob(
+                            mime_type=video.content_type,
+                            data=video_bytes
+                        )
+                    ),
+                ],
+            ),
+        ]
+        
+        # Generate content with temperature=0 and JSON response type
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=contents,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0,
+                response_schema=MealPlan
+            )
         )
-    )
-    
-    meal_plan_data = response.parsed.model_dump()
+        
+        # Get the meal plan data
+        meal_plan_data = response.parsed.model_dump()
 
-    # Check if analysis already exists
-    existing_analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
-    
-    # If analysis exists, delete it
-    if existing_analysis:
-        db.delete(existing_analysis)
+        # Check if analysis already exists
+        existing_analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
+        
+        # If analysis exists, delete it
+        if existing_analysis:
+            db.delete(existing_analysis)
+            db.commit()
+        
+        # Create new analysis
+        analysis = VideoAnalysis(
+            filename=video.filename,
+            content_type=video.content_type,
+            prompt=prompt,
+            analysis_text=json.dumps(meal_plan_data),
+        )
+        
+        db.add(analysis)
         db.commit()
-    
-    # Create new analysis
-    analysis = VideoAnalysis(
-        filename=video.filename,
-        content_type=video.content_type,
-        prompt=prompt,
-        analysis_text=json.dumps(meal_plan_data),
-    )
-    
-    db.add(analysis)
-    db.commit()
-    db.refresh(analysis)
+        db.refresh(analysis)
 
-    if os.path.exists(temp_video_path):
-        os.unlink(temp_video_path)
-    
-    # Convert back to MealPlan object
-    return response.parsed
+        if os.path.exists(temp_video_path):
+            os.unlink(temp_video_path)
+        
+        # Convert back to MealPlan object
+        return response.parsed
+        
+    except Exception as e:
+        error_message = f"Error in analyze_video: {str(e)}"
+        print(f"ERROR: {error_message}")
+        import traceback
+        print(traceback.format_exc())
+        
+        if os.path.exists(temp_video_path):
+            os.unlink(temp_video_path)
+            
+        # Return detailed error response
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Failed to analyze video",
+                "error": str(e),
+                "type": str(type(e).__name__)
+            }
+        )
 
 
 

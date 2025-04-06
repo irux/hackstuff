@@ -56,40 +56,11 @@ class ShoppingList(BaseModel):
 
 class DayMeal(BaseModel):
     day: str  # Monday, Tuesday, etc.
-    meal: Optional[str] = None
-    recipe_refs: List[str] = []  # References to recipes by name
+    meal: Optional[str]
+    recipe_refs: List[str]
 
 
 class MealPlan(BaseModel):
     shopping_list: ShoppingList
     recipes: List[Recipe]
-    days: List[DayMeal] = []  # Weekly meal plan organized by days
-
-
-# API schema models (without default values)
-class SchemaIngredient(BaseModel):
-    name: str
-    quantity: float
-    unit: str
-
-
-class SchemaRecipe(BaseModel):
-    name: str
-    ingredients: List[SchemaIngredient]
-    instructions: List[str]
-
-
-class SchemaShoppingList(BaseModel):
-    items: List[SchemaIngredient]
-
-
-class SchemaDayMeal(BaseModel):
-    day: str  # Monday, Tuesday, etc.
-    meal: Optional[str]
-    recipe_refs: List[str]
-
-
-class SchemaMealPlan(BaseModel):
-    shopping_list: SchemaShoppingList
-    recipes: List[SchemaRecipe]
-    days: List[SchemaDayMeal]
+    days: List[DayMeal]
