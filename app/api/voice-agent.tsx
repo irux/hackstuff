@@ -55,7 +55,7 @@ export function Conversation() {
       setMediaStream(stream);
 
       await conversation.startSession({
-        agentId: 'tu28ihtc1vttQvc95tsQ',
+        agentId: 'BJO1v01X6D9XOuo78Vkd',
       });
     } catch (error) {
       console.error('Failed to start:', error);

@@ -39,16 +39,34 @@ export function Upload() {
     }
   }
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!file) return
 
     setIsUploading(true)
 
-    // Simulate upload and processing
-    setTimeout(() => {
-      setIsUploading(false)
+    try {
+      // Create form data to send the file
+      const formData = new FormData()
+      formData.append("video", file)
+
+      // Send the file to the API endpoint
+      const response = await fetch("/api/py/analyze-video", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`)
+      }
+
+      // Redirect to results page
       window.location.href = "/voice-analysis"
-    }, 2000)
+    } catch (error) {
+      console.error("Error uploading video:", error)
+      alert("Failed to upload video. Please try again.")
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   return (
