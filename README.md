@@ -133,9 +133,9 @@ The application consists of three main components:
 ## Technologies Used
 
 - **Frontend**: Next.js, React, Tailwind CSS, shadcn/ui
-- **Backend**: Python, FastAPI, Docker, Scrapy
-- **AI**: 11labs Voice AI, Custom video analysis models
-- **Database**: MongoDB (via Docker)
+- **Backend**: Python, FastAPI, Docker, Scrapy, Vercel
+- **AI**: Elevenlabs Voice AI, Google Gemini
+- **Database**: PostgreSQL
 
 
 ## Troubleshooting
