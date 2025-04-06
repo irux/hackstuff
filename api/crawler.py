@@ -19,7 +19,7 @@ from scrapy.utils.project import get_project_settings
 from twisted.internet import reactor
 
 # Import application-specific modules
-from api.logic.database import FoodItemDB, get_session
+from .logic.database import FoodItemDB, get_session
 
 # Load environment variables
 load_dotenv()

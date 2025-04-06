@@ -14,11 +14,11 @@ from google.genai import types
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from api.crawler import router as crawler_router
+from .crawler import router as crawler_router
 # Import database models
-from api.logic.database import get_db, VideoAnalysis, OperationStatus, init_db
+from .logic.database import get_db, VideoAnalysis, OperationStatus, init_db
 # Import Pydantic models
-from api.logic.models import MealPlan, MealPlanUpdate
+from .logic.models import MealPlan, MealPlanUpdate
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", None)
 
