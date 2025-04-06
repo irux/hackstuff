@@ -115,31 +115,30 @@ async def analyze_video(
         )
     )
     
-    # Convert SchemaMealPlan to MealPlan format (which has defaults)
-    # meal_plan_data = response.parsed.model_dump()
+    meal_plan_data = response.parsed.model_dump()
 
-    # # Check if analysis already exists
-    # existing_analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
+    # Check if analysis already exists
+    existing_analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
     
-    # # If analysis exists, delete it
-    # if existing_analysis:
-    #     db.delete(existing_analysis)
-    #     db.commit()
+    # If analysis exists, delete it
+    if existing_analysis:
+        db.delete(existing_analysis)
+        db.commit()
     
-    # # Create new analysis
-    # analysis = VideoAnalysis(
-    #     filename=video.filename,
-    #     content_type=video.content_type,
-    #     prompt=prompt,
-    #     analysis_text=json.dumps(meal_plan_data),
-    # )
+    # Create new analysis
+    analysis = VideoAnalysis(
+        filename=video.filename,
+        content_type=video.content_type,
+        prompt=prompt,
+        analysis_text=json.dumps(meal_plan_data),
+    )
     
-    # db.add(analysis)
-    # db.commit()
-    # db.refresh(analysis)
+    db.add(analysis)
+    db.commit()
+    db.refresh(analysis)
 
-    # if os.path.exists(temp_video_path):
-    #     os.unlink(temp_video_path)
+    if os.path.exists(temp_video_path):
+        os.unlink(temp_video_path)
     
     # Convert back to MealPlan object
     return response.parsed
