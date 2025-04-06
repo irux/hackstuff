@@ -3,10 +3,11 @@
 import { ShoppingList } from "@/components/shopping-list"
 import { SupermarketOptions } from "@/components/supermarket-options"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Video } from "lucide-react"
 import Link from "next/link"
 import { FeaturedRecipe } from "@/components/featured-recipe"
 import { RecipeList } from "@/components/recipe-list"
+import { MealPlanByDays } from "@/components/meal-plan-by-days"
 import { useEffect, useState } from "react"
 
 // Define types based on your schema
@@ -29,11 +30,18 @@ interface ShoppingItem {
   unit: string
 }
 
+interface DayMeal {
+  day: string
+  meal: string
+  recipe_refs: string[]
+}
+
 interface AnalysisResult {
   shopping_list: {
     items: ShoppingItem[]
   }
   recipes: Recipe[]
+  days: DayMeal[]
 }
 
 export default function ResultsPage() {
@@ -53,16 +61,23 @@ export default function ResultsPage() {
 
         const result = await response.json()
 
+        // Map recipe images based on recipe names
+        const recipeImages: Record<string, string> = {
+          "Juice and JobWorks": "https://goodcheapeats.com/wp-content/uploads/2015/03/asian-veg-rice-salad-for-meal-prep.jpg",
+          "Vegan Milk with Bread": "https://ecolunchboxes.com/cdn/shop/articles/Bowls_Photo_2_1200x.jpg?v=1586981990",
+          "Avocado Toast": "https://cdn.apartmenttherapy.info/image/upload/f_auto,q_auto:eco,c_fill,g_center,w_730,h_913/k%2FPhoto%2FSeries%2F2019-11-Power-Hour-Gluten-Free%2F2019-10-14_Kitchn87418_Power-Hour-Gluten-Free",
+          "Scrambled Eggs": "https://cdn.pixabay.com/photo/2017/09/09/12/09/india-2731817_640.jpg",
+          "Simple Salad": "https://static.toiimg.com/photo/msid-71673666,width-96,height-65.cms",
+        }
+
         // Process the data to ensure all recipes have images
         const processedData = {
           ...result,
-          recipes: result.recipes.map((recipe: Recipe, index: number) => ({
+          recipes: result.recipes.map((recipe: Recipe) => ({
             ...recipe,
             image:
-              recipe.image ||
-              (index === 0
-                ? "/images/pexels-photo-1640771.jpeg"
-                : `/placeholder.svg?height=192&width=384&text=${encodeURIComponent(recipe.name)}`),
+              recipeImages[recipe.name] ||
+              `/placeholder.svg?height=192&width=384&text=${encodeURIComponent(recipe.name)}`,
           })),
         }
 
@@ -136,35 +151,37 @@ export default function ResultsPage() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
-              <img
-                src="/placeholder.svg?height=96&width=96&text=Video+Thumbnail"
-                alt="Video thumbnail"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold">Your Video Analysis Results</h2>
-              <p className="text-gray-600">
-                Based on your uploaded cooking video, we've generated the following recipe ideas and shopping list.
-              </p>
-            </div>
+        {/* Smaller Video Analysis Results block with icon */}
+        <div className="bg-white p-4 rounded-xl shadow-sm mb-8 flex items-center gap-3">
+          <div className="bg-green-100 p-2 rounded-full">
+            <Video className="h-5 w-5 text-green-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold">Your Video Analysis Results</h2>
+            <p className="text-sm text-gray-600">We've generated meal ideas based on your uploaded cooking video.</p>
           </div>
         </div>
+
+        {/* Meal Plan By Days */}
+        <MealPlanByDays days={data.days} recipes={data.recipes} />
 
         {/* Featured Recipe */}
         {data.recipes.length > 0 && <FeaturedRecipe recipe={data.recipes[0]} />}
 
-        {/* Shopping List (left) and Supermarket Options (right) */}
-        <div className="grid md:grid-cols-2 gap-8 mb-8">
+        {/* Shopping List */}
+        <div className="mb-8">
           <ShoppingList items={data.shopping_list.items} />
-          <SupermarketOptions />
         </div>
 
         {/* Recipe List */}
-        {data.recipes.length > 1 && <RecipeList recipes={data.recipes} />}
+        {data.recipes.length > 1 && (
+          <div className="mb-8">
+            <RecipeList recipes={data.recipes} />
+          </div>
+        )}
+
+        {/* Supermarket Options (moved to bottom) */}
+        <SupermarketOptions />
       </main>
 
       <footer className="bg-gray-50 py-8 mt-20">
