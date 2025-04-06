@@ -74,7 +74,7 @@ WEBSITES = [
     "https://www.aldi-nord.de/",
     "https://www.aldi-sued.de/",
     "https://www.lidl.de/",
-    "https://www.lidl.de/c/billiger-montag/a10006065?channel=store&tabCode=Current_Sales_Week"
+    "https://www.lidl.de/c/billiger-montag/a10006065?channel=store&tabCode=Current_Sales_Week",
     "https://netto.de/",
     "https://https://www.edeka.de/eh/angebote.jsp",
     "https://www.rewe.de/",
