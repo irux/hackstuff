@@ -10,7 +10,7 @@ EcoDish is an innovative application that uses AI to analyze cooking videos and 
 - **Weekly Meal Planning**: View a complete 7-day meal plan
 - **Detailed Recipes**: Get ingredients, instructions, and preparation times
 - **Smart Shopping List**: Automatically generated based on your meal plan
-- **Supermarket Integration**: Order ingredients directly from Lidl, REWE, or EDEKA
+- **Supermarket Integration**: Show ingredients on promotion directly from Lidl, REWE, or EDEKA
 
 ## Prerequisites
 
@@ -26,8 +26,8 @@ Make sure you have the following installed on your machine:
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/meal-genius.git
-cd meal-genius
+git clone https://github.com/irux/hackstuff.git
+cd hackstoff
 ```
 
 2. **Install dependencies**
@@ -53,7 +53,7 @@ docker compose up
 
 
 ```shellscript
-uvicorn main:app
+uvicorn index:app
 ```
 
 5. **Start the frontend development server**
@@ -111,6 +111,7 @@ The application consists of three main components:
 1. Processes video uploads
 2. Analyzes content using AI models
 3. Generates meal plans and shopping lists
+4. Scrapes supermarket websites for food items on offer
 
 
 3. **Voice Agent**: 11labs voice AI
@@ -124,12 +125,15 @@ The application consists of three main components:
 - `/api/py/analysis`: Returns meal plan data based on video analysis
 - `/api/upload`: Handles video file uploads
 - `/api/voice`: Manages voice agent interactions
+- `/api/crawler/scrape` : Scrapes supermarket websites and collect data on food items on offer
+- `/api/crawler/results` : Returns the scraped food items
+- `/api/crawler/status` : Returns the current status of the crawler
 
 
 ## Technologies Used
 
 - **Frontend**: Next.js, React, Tailwind CSS, shadcn/ui
-- **Backend**: Python, FastAPI, Docker
+- **Backend**: Python, FastAPI, Docker, Scrapy
 - **AI**: 11labs Voice AI, Custom video analysis models
 - **Database**: MongoDB (via Docker)
 
