@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CalendarDays } from "lucide-react"
-import Image from "next/image"
 
 interface DayMeal {
   day: string
@@ -33,11 +32,10 @@ export function MealPlanByDays({ days, recipes }: MealPlanByDaysProps) {
               <div className="bg-green-50 p-2 font-medium text-green-800">{day.day}</div>
               <div className="p-3">
                 <div className="w-full h-24 relative mb-2 rounded overflow-hidden">
-                  <Image
+                  <img
                     src={getRecipeImage(day.recipe_refs[0]) || "/placeholder.svg"}
                     alt={day.meal}
-                    fill
-                    className="object-cover"
+                    className="w-full h-full object-cover"
                   />
                 </div>
                 <p className="text-sm font-medium">{day.meal}</p>

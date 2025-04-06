@@ -49,6 +49,21 @@ export default function ResultsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Define the list of default images
+  const defaultImages = [
+    "https://goodcheapeats.com/wp-content/uploads/2015/03/asian-veg-rice-salad-for-meal-prep.jpg",
+    "https://ecolunchboxes.com/cdn/shop/articles/Bowls_Photo_2_1200x.jpg?v=1586981990",
+    "https://cdn.apartmenttherapy.info/image/upload/f_auto,q_auto:eco,c_fill,g_center,w_730,h_913/k%2FPhoto%2FSeries%2F2019-11-Power-Hour-Gluten-Free%2F2019-10-14_Kitchn87418_Power-Hour-Gluten-Free",
+    "https://cdn.pixabay.com/photo/2017/09/09/12/09/india-2731817_640.jpg",
+    "https://static.toiimg.com/photo/msid-71673666,width-96,height-65.cms",
+  ]
+
+  // Function to get a random image from the default images
+  const getRandomImage = () => {
+    const randomIndex = Math.floor(Math.random() * defaultImages.length)
+    return defaultImages[randomIndex]
+  }
+
   useEffect(() => {
     async function fetchAnalysisResults() {
       try {
@@ -61,23 +76,13 @@ export default function ResultsPage() {
 
         const result = await response.json()
 
-        // Map recipe images based on recipe names
-        const recipeImages: Record<string, string> = {
-          "Juice and JobWorks": "https://goodcheapeats.com/wp-content/uploads/2015/03/asian-veg-rice-salad-for-meal-prep.jpg",
-          "Vegan Milk with Bread": "https://ecolunchboxes.com/cdn/shop/articles/Bowls_Photo_2_1200x.jpg?v=1586981990",
-          "Avocado Toast": "https://cdn.apartmenttherapy.info/image/upload/f_auto,q_auto:eco,c_fill,g_center,w_730,h_913/k%2FPhoto%2FSeries%2F2019-11-Power-Hour-Gluten-Free%2F2019-10-14_Kitchn87418_Power-Hour-Gluten-Free",
-          "Scrambled Eggs": "https://cdn.pixabay.com/photo/2017/09/09/12/09/india-2731817_640.jpg",
-          "Simple Salad": "https://static.toiimg.com/photo/msid-71673666,width-96,height-65.cms",
-        }
-
         // Process the data to ensure all recipes have images
         const processedData = {
           ...result,
           recipes: result.recipes.map((recipe: Recipe) => ({
             ...recipe,
-            image:
-              recipeImages[recipe.name] ||
-              `/placeholder.svg?height=192&width=384&text=${encodeURIComponent(recipe.name)}`,
+            // If recipe doesn't have an image, use a random one from our list
+            image: recipe.image || getRandomImage(),
           })),
         }
 

@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Clock, ChevronDown, ChevronUp } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import Image from "next/image"
 
 // Define types based on the schema
 interface Ingredient {
@@ -32,13 +31,7 @@ export function RecipeCard({ recipe, featured = false }: RecipeCardProps) {
     <Card className={`overflow-hidden ${featured ? "mb-6" : ""}`}>
       <div className="relative">
         <div className="w-full h-48 relative overflow-hidden">
-          {recipe.image ? (
-            <Image src={recipe.image || "/placeholder.svg"} alt={recipe.name} fill className="object-cover" />
-          ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-400">No image available</span>
-            </div>
-          )}
+          <img src={recipe.image || "/placeholder.svg"} alt={recipe.name} className="w-full h-full object-cover" />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
           <CardHeader className="text-white pb-2 pt-16 w-full">
