@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from typing import Optional
 import shutil
 import json
+import hashlib
 from sqlalchemy.orm import Session
 from sqlalchemy import select, desc
 
@@ -69,7 +70,14 @@ async def analyze_video(
             shutil.copyfileobj(video.file, temp_video)
             temp_video_path = temp_video.name
             
-       
+        # Calculate SHA-256 hash of the file
+        sha256_hash = hashlib.sha256()
+        with open(temp_video_path, "rb") as f:
+            # Read and update hash in chunks to handle large files
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        file_hash = sha256_hash.hexdigest()
+   
         # Initialize Gemini client
         client = genai.Client(api_key=GEMINI_API_KEY)
         
@@ -120,16 +128,17 @@ async def analyze_video(
         # Get the meal plan data
         meal_plan_data = response.parsed.model_dump()
 
-        # Check if analysis already exists
-        existing_analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
+        # Check if analysis with this hash already exists
+        existing_analysis = db.query(VideoAnalysis).filter(VideoAnalysis.id == file_hash).first()
         
         # If analysis exists, delete it
         if existing_analysis:
             db.delete(existing_analysis)
             db.commit()
         
-        # Create new analysis
+        # Create new analysis using file hash as ID
         analysis = VideoAnalysis(
+            id=file_hash,
             filename=video.filename,
             content_type=video.content_type,
             prompt=prompt,
@@ -144,7 +153,7 @@ async def analyze_video(
             os.unlink(temp_video_path)
         
         # Convert back to MealPlan object
-        return response.parsed
+        return MealPlan.model_validate(meal_plan_data)
         
     except Exception as e:
         error_message = f"Error in analyze_video: {str(e)}"
@@ -183,12 +192,19 @@ def is_done(db: Session = Depends(get_db)):
 def get_latest_analysis(db: Session = Depends(get_db)):
     """Get the most recent video analysis"""
     analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
-    
+
     if not analysis:
         raise HTTPException(status_code=404, detail="No analysis found")
 
-    # Return the analysis_text directly which contains the meal plan
-    return MealPlan.model_validate_json(analysis.analysis_text)
+    # Parse the JSON string from the database
+    try:
+        # Return as MealPlan object
+        return MealPlan.model_validate(json.loads(analysis.analysis_text))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error parsing meal plan data: {str(e)}"
+        )
 
 
 @app.post("/api/py/set-status/{status}")

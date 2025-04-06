@@ -28,7 +28,7 @@ Base = declarative_base()
 class VideoAnalysis(Base):
     __tablename__ = "video_analyses"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String(64), primary_key=True, index=True)  # SHA-256 hash (64 characters)
     filename = Column(String(255), nullable=False)
     content_type = Column(String(100), nullable=False)
     prompt = Column(Text, nullable=True)
@@ -42,7 +42,7 @@ class VideoAnalysis(Base):
 class OperationStatus(Base):
     __tablename__ = "operation_status"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     operation_type = Column(String(50), nullable=False)
     is_done = Column(String(5), default="false")
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
