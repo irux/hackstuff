@@ -72,7 +72,7 @@ async def update_meal_plan(
         logger.info(f"Meal plan update request received with data: {meal_plan.dict(exclude_none=True)}")
         
         # Get the most recent analysis
-        meal_plan_obj = MealPlan.model_validate(meal_plan.meal_plan)
+        meal_plan_obj = MealPlan.model_validate_json(meal_plan.meal_plan)
         logger.info("Successfully validated meal plan data")
         
         latest_analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
