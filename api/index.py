@@ -1,22 +1,22 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Response
-from fastapi.middleware.cors import CORSMiddleware
-import os
-import tempfile
 import base64
+import hashlib
+import json
+import logging
+import os
+import shutil
+import tempfile
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Response
+from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from google.genai import types
-from dotenv import load_dotenv
-from typing import Optional
-import shutil
-import json
-import hashlib
-import logging
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
-from sqlalchemy import select, desc
 
+from .crawler import router as crawler_router
 # Import database models
 from .logic.database import get_db, VideoAnalysis, OperationStatus, init_db
-
 # Import Pydantic models
 from .logic.models import MealPlan, MealPlanUpdate
 
@@ -42,10 +42,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(crawler_router, prefix="/crawler", tags=["crawler"])
+
+
 # Initialize database tables on startup
 @app.on_event("startup")
 def startup_db_client():
     init_db()
+
 
 @app.get("/")
 async def root():
@@ -59,50 +63,50 @@ async def hello():
 
 @app.post("/api/py/update-meal-plan")
 async def update_meal_plan(
-    meal_plan: MealPlanUpdate,
-    db: Session = Depends(get_db),
+        meal_plan: MealPlanUpdate,
+        db: Session = Depends(get_db),
 ):
     """
     Update an existing meal plan in the most recent video analysis
     """
     logger.info(f"Received update request for meal plan")
-    
+
     try:
         # Log the incoming meal plan data
         logger.info(f"Meal plan update request received with data: {meal_plan.dict(exclude_none=True)}")
-        
+
         # Get the most recent analysis
         meal_plan_obj = MealPlan.model_validate_json(meal_plan.meal_plan)
         logger.info("Successfully validated meal plan data")
-        
+
         latest_analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
-        
+
         if not latest_analysis:
             logger.warning("No existing meal plan found to update")
             raise HTTPException(status_code=404, detail="No meal plan found to update")
-        
+
         logger.info(f"Found existing analysis to update: id={latest_analysis.id}, filename={latest_analysis.filename}")
-        
+
         # Log meal plan structure before update
         logger.info(f"Original meal plan structure: {latest_analysis.analysis_text[:100]}...")
-        
+
         # Update the analysis_text with the new meal plan
         new_meal_plan_json = meal_plan_obj.model_dump_json()
         latest_analysis.analysis_text = new_meal_plan_json
         logger.info(f"Updated meal plan structure: {new_meal_plan_json[:100]}...")
-        
+
         db.commit()
         logger.info("Successfully committed meal plan update to database")
-        
+
         return {"message": "Meal plan updated successfully"}
     except Exception as e:
         error_message = f"Error updating meal plan: {str(e)}"
         logger.error(error_message)
-        
+
         # Log full traceback
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
-        
+
         raise HTTPException(
             status_code=500,
             detail={
@@ -112,10 +116,11 @@ async def update_meal_plan(
             }
         )
 
+
 @app.post("/api/py/analyze-video", response_model=MealPlan)
 async def analyze_video(
-    video: UploadFile = File(...),
-    db: Session = Depends(get_db),
+        video: UploadFile = File(...),
+        db: Session = Depends(get_db),
 ):
     temp_video_path = None
     try:
@@ -127,11 +132,11 @@ async def analyze_video(
 
         # Save uploaded file temporarily
         with tempfile.NamedTemporaryFile(
-            delete=False, suffix=os.path.splitext(video.filename)[1]
+                delete=False, suffix=os.path.splitext(video.filename)[1]
         ) as temp_video:
             shutil.copyfileobj(video.file, temp_video)
             temp_video_path = temp_video.name
-            
+
         # Calculate SHA-256 hash of the file
         sha256_hash = hashlib.sha256()
         with open(temp_video_path, "rb") as f:
@@ -139,15 +144,15 @@ async def analyze_video(
             for byte_block in iter(lambda: f.read(4096), b""):
                 sha256_hash.update(byte_block)
         file_hash = sha256_hash.hexdigest()
-   
+
         # Initialize Gemini client
         client = genai.Client(api_key=GEMINI_API_KEY)
-        
+
         # Read the video file and encode it
         with open(temp_video_path, "rb") as f:
             video_bytes = f.read()
             video_base64 = base64.b64encode(video_bytes).decode("utf-8")
-        
+
         # Define the output structure - now in the prompt
         prompt = """
         Analyze this video showing food items and create a simple meal plan.
@@ -159,7 +164,7 @@ async def analyze_video(
         
         Keep everything simple and straightforward.
         """
-        
+
         # Create content with video data
         contents = [
             types.Content(
@@ -175,7 +180,7 @@ async def analyze_video(
                 ],
             ),
         ]
-        
+
         # Generate content with temperature=0 and JSON response type
         response = client.models.generate_content(
             model="gemini-2.0-flash",
@@ -186,18 +191,18 @@ async def analyze_video(
                 response_schema=MealPlan
             )
         )
-        
+
         # Get the meal plan data
         meal_plan_data = response.parsed.model_dump()
 
         # Check if analysis with this hash already exists
         existing_analysis = db.query(VideoAnalysis).filter(VideoAnalysis.id == file_hash).first()
-        
+
         # If analysis exists, delete it
         if existing_analysis:
             db.delete(existing_analysis)
             db.commit()
-        
+
         # Create new analysis using file hash as ID
         analysis = VideoAnalysis(
             id=file_hash,
@@ -206,26 +211,26 @@ async def analyze_video(
             prompt=prompt,
             analysis_text=json.dumps(meal_plan_data),
         )
-        
+
         db.add(analysis)
         db.commit()
         db.refresh(analysis)
 
         if os.path.exists(temp_video_path):
             os.unlink(temp_video_path)
-        
+
         # Convert back to MealPlan object
         return MealPlan.model_validate(meal_plan_data)
-        
+
     except Exception as e:
         error_message = f"Error in analyze_video: {str(e)}"
         print(f"ERROR: {error_message}")
         import traceback
         print(traceback.format_exc())
-        
+
         if os.path.exists(temp_video_path):
             os.unlink(temp_video_path)
-            
+
         # Return detailed error response
         raise HTTPException(
             status_code=500,
@@ -235,7 +240,6 @@ async def analyze_video(
                 "type": str(type(e).__name__)
             }
         )
-
 
 
 @app.get("/api/py/is-done")
@@ -264,7 +268,7 @@ def get_latest_analysis(db: Session = Depends(get_db)):
         return MealPlan.model_validate(json.loads(analysis.analysis_text))
     except Exception as e:
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail=f"Error parsing meal plan data: {str(e)}"
         )
 
@@ -274,16 +278,20 @@ def set_status(status: str, db: Session = Depends(get_db)):
     """Manually set the operation status (for testing)"""
     if status not in ["true", "false"]:
         raise HTTPException(status_code=400, detail="Status must be 'true' or 'false'")
-    
+
     operation_status = db.query(OperationStatus).filter(OperationStatus.operation_type == "video_analysis").first()
-    
+
     if operation_status:
         operation_status.is_done = status
     else:
         operation_status = OperationStatus(operation_type="video_analysis", is_done=status)
         db.add(operation_status)
-    
+
     db.commit()
     return Response(status_code=200)
 
 
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("index:app", host="0.0.0.0", port=8000)
