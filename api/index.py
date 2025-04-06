@@ -42,7 +42,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(crawler_router, prefix="/crawler", tags=["crawler"])
+app.include_router(crawler_router, prefix="/api/py/crawler", tags=["crawler"])
 
 
 # Initialize database tables on startup
