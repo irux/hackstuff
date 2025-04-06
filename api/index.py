@@ -10,6 +10,7 @@ from typing import Optional
 import shutil
 import json
 import hashlib
+import logging
 from sqlalchemy.orm import Session
 from sqlalchemy import select, desc
 
@@ -23,6 +24,12 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", None)
 
 load_dotenv()
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("meal_planner_api")
 
 app = FastAPI(title="Vercel FastAPI")
 
@@ -58,20 +65,44 @@ async def update_meal_plan(
     """
     Update an existing meal plan in the most recent video analysis
     """
+    logger.info(f"Received update request for meal plan")
+    
     try:
+        # Log the incoming meal plan data
+        logger.info(f"Meal plan update request received with data: {meal_plan.dict(exclude_none=True)}")
+        
         # Get the most recent analysis
         meal_plan_obj = MealPlan.model_validate(meal_plan.meal_plan)
+        logger.info("Successfully validated meal plan data")
+        
         latest_analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
         
         if not latest_analysis:
+            logger.warning("No existing meal plan found to update")
             raise HTTPException(status_code=404, detail="No meal plan found to update")
         
+        logger.info(f"Found existing analysis to update: id={latest_analysis.id}, filename={latest_analysis.filename}")
+        
+        # Log meal plan structure before update
+        logger.info(f"Original meal plan structure: {latest_analysis.analysis_text[:100]}...")
+        
         # Update the analysis_text with the new meal plan
-        latest_analysis.analysis_text = meal_plan_obj.model_dump_json()
+        new_meal_plan_json = meal_plan_obj.model_dump_json()
+        latest_analysis.analysis_text = new_meal_plan_json
+        logger.info(f"Updated meal plan structure: {new_meal_plan_json[:100]}...")
+        
         db.commit()
+        logger.info("Successfully committed meal plan update to database")
         
         return {"message": "Meal plan updated successfully"}
     except Exception as e:
+        error_message = f"Error updating meal plan: {str(e)}"
+        logger.error(error_message)
+        
+        # Log full traceback
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        
         raise HTTPException(
             status_code=500,
             detail={
