@@ -1,5 +1,6 @@
 # Apply nest_asyncio to allow nested event loops
 import nest_asyncio
+import traceback
 
 nest_asyncio.apply()
 
@@ -138,18 +139,58 @@ def extract_food_items(page_text: str) -> list[FoodItem]:
         {page_text}
         """
 
+        # Define schema as a dictionary instead of using list[FoodItem]
+        response_schema = {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "source_url": {"type": "string"},
+                    "food_name": {"type": "string"},
+                    "food_item_description": {"type": "string"},
+                    "price": {"type": "string"},
+                    "quantity": {"type": "string"}
+                },
+                "required": ["food_name", "food_item_description", "price", "quantity"]
+            }
+        }
+
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=prompt,
             config={
                 "response_mime_type": "application/json",
-                "response_schema": list[FoodItem],
+                "response_schema": response_schema,
                 "temperature": 0,
             },
         )
-        return response.parsed or []
+        
+        # Parse the response into FoodItem objects
+        items_data = response.text
+        if not items_data:
+            return []
+            
+        try:
+            import json
+            items_json = json.loads(items_data)
+            food_items = []
+            
+            for item_data in items_json:
+                # Add source_url if not provided
+                if "source_url" not in item_data:
+                    item_data["source_url"] = ""
+                
+                food_items.append(FoodItem(**item_data))
+            
+            return food_items
+        except Exception as e:
+            traceback.print_exc()
+            print(f"Error parsing response: {str(e)}")
+            return []
+            
     except Exception as e:
-        # Log error if Gemini API call fails
+        # Log error with full traceback if Gemini API call fails
+        traceback.print_exc()
         print(f"Gemini API error: {str(e)}")
         return []
 
@@ -220,6 +261,7 @@ def crawl() -> dict:
             session.add(db_item)
             session.commit()
         except Exception as e:
+            traceback.print_exc()
             print(f"Error saving item: {str(e)}")
 
     def cleanup(result):
@@ -238,6 +280,7 @@ def crawl() -> dict:
         deferred.addBoth(cleanup)
         return {"message": "Scrape started"}
     except Exception as e:
+        traceback.print_exc()
         print(f"Crawl error: {str(e)}")
         cleanup(None)
         raise e

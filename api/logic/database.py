@@ -65,7 +65,7 @@ class OperationStatus(Base):
 class FoodItemDB(Base):
     __tablename__ = "food_items"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     source_url = Column(String)
     food_name = Column(String)
     food_item_description = Column(String)
