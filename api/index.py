@@ -50,6 +50,36 @@ async def hello():
     return {"message": "Hello World"}
 
 
+@app.post("/api/py/update-meal-plan")
+async def update_meal_plan(
+    meal_plan: MealPlan,
+    db: Session = Depends(get_db),
+):
+    """
+    Update an existing meal plan in the most recent video analysis
+    """
+    try:
+        # Get the most recent analysis
+        latest_analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
+        
+        if not latest_analysis:
+            raise HTTPException(status_code=404, detail="No meal plan found to update")
+        
+        # Update the analysis_text with the new meal plan
+        latest_analysis.analysis_text = meal_plan.model_dump_json()
+        db.commit()
+        
+        return {"message": "Meal plan updated successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Failed to update meal plan",
+                "error": str(e),
+                "type": str(type(e).__name__)
+            }
+        )
+
 @app.post("/api/py/analyze-video", response_model=MealPlan)
 async def analyze_video(
     video: UploadFile = File(...),
