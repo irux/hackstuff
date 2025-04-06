@@ -3,38 +3,40 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ShoppingCart, ExternalLink } from "lucide-react"
+import { ShoppingCart, Store } from "lucide-react"
+import Image from "next/image"
 
 export function SupermarketOptions() {
   const [selectedStore, setSelectedStore] = useState<string | null>(null)
 
   const stores = [
     {
-      id: "walmart",
-      name: "Walmart",
-      logo: "/placeholder.svg?height=40&width=120&text=Walmart",
+      id: "lidl",
+      name: "Lidl",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Lidl-Logo.svg/800px-Lidl-Logo.svg.png",
       deliveryTime: "2-3 hours",
-      deliveryFee: "$5.99",
+      deliveryFee: "€3.99",
     },
     {
-      id: "kroger",
-      name: "Kroger",
-      logo: "/placeholder.svg?height=40&width=120&text=Kroger",
+      id: "rewe",
+      name: "REWE",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/0/08/Rewe_Logo.png",
       deliveryTime: "Same day",
-      deliveryFee: "$3.99",
+      deliveryFee: "€4.99",
     },
     {
-      id: "wholeFoods",
-      name: "Whole Foods",
-      logo: "/placeholder.svg?height=40&width=120&text=Whole+Foods",
+      id: "edeka",
+      name: "EDEKA",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/c/cf/Edeka_Logo_Aktuell.svg",
       deliveryTime: "1-2 hours",
-      deliveryFee: "$4.99",
+      deliveryFee: "€5.99",
     },
   ]
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center space-x-2">
+        <Store className="h-5 w-5 text-green-600" />
         <CardTitle className="text-xl">Order Ingredients</CardTitle>
       </CardHeader>
       <CardContent>
@@ -51,8 +53,8 @@ export function SupermarketOptions() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-24">
-                    <img src={store.logo || "/placeholder.svg"} alt={store.name} className="h-8" />
+                  <div className="w-16 h-8 relative">
+                    <Image src={store.logo || "/placeholder.svg"} alt={store.name} fill className="object-contain" />
                   </div>
                   <div>
                     <p className="font-medium">{store.name}</p>
@@ -73,13 +75,6 @@ export function SupermarketOptions() {
           <ShoppingCart className="h-4 w-4" />
           Order Ingredients
         </Button>
-
-        <div className="text-center mt-4">
-          <a href="#" className="text-sm text-gray-500 flex items-center justify-center gap-1 hover:text-green-600">
-            View all available stores
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        </div>
       </CardContent>
     </Card>
   )
