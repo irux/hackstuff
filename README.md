@@ -42,50 +42,6 @@ pip install -r requirements.txt
 ```
 
 
-# MealGenius - AI-Powered Meal Planning App
-
-MealGenius is an innovative application that uses AI to analyze cooking videos and generate personalized meal plans, recipes, and shopping lists. The app features a voice agent powered by 11labs that interacts with users to understand their preferences and dietary needs.
-
-![MealGenius App](https://goodcheapeats.com/wp-content/uploads/2015/03/asian-veg-rice-salad-for-meal-prep.jpg)
-
-## Features
-
-- **Video Analysis**: Upload cooking videos to get personalized meal suggestions
-- **AI Voice Assistant**: Interact with an 11labs voice agent to refine your meal plan
-- **Weekly Meal Planning**: View a complete 7-day meal plan
-- **Detailed Recipes**: Get ingredients, instructions, and preparation times
-- **Smart Shopping List**: Automatically generated based on your meal plan
-- **Supermarket Integration**: Order ingredients directly from Lidl, REWE, or EDEKA
-
-## Prerequisites
-
-Make sure you have the following installed on your machine:
-
-- Docker
-- Python >= 3.11
-- Node.js >= 18
-- npm
-
-## Installation
-
-1. **Clone the repository**
-
-```bash
-git clone https://github.com/yourusername/meal-genius.git
-cd meal-genius
-```
-
-2. **Install dependencies**
-
-
-```shellscript
-# Install Node.js dependencies
-npm i
-
-# Install Python dependencies
-pip install -r requirements.txt
-```
-
 3. **Start the Docker containers**
 
 
