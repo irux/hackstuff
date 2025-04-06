@@ -17,7 +17,7 @@ from sqlalchemy import select, desc
 from .logic.database import get_db, VideoAnalysis, OperationStatus, init_db
 
 # Import Pydantic models
-from .logic.models import MealPlan
+from .logic.models import MealPlan, MealPlanUpdate
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", None)
 
@@ -52,7 +52,7 @@ async def hello():
 
 @app.post("/api/py/update-meal-plan")
 async def update_meal_plan(
-    meal_plan: MealPlan,
+    meal_plan: MealPlanUpdate,
     db: Session = Depends(get_db),
 ):
     """
@@ -60,13 +60,14 @@ async def update_meal_plan(
     """
     try:
         # Get the most recent analysis
+        meal_plan_obj = MealPlan.model_validate(meal_plan.meal_plan)
         latest_analysis = db.query(VideoAnalysis).order_by(desc(VideoAnalysis.created_at)).first()
         
         if not latest_analysis:
             raise HTTPException(status_code=404, detail="No meal plan found to update")
         
         # Update the analysis_text with the new meal plan
-        latest_analysis.analysis_text = meal_plan.model_dump_json()
+        latest_analysis.analysis_text = meal_plan_obj.model_dump_json()
         db.commit()
         
         return {"message": "Meal plan updated successfully"}

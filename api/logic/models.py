@@ -64,3 +64,8 @@ class MealPlan(BaseModel):
     shopping_list: ShoppingList
     recipes: List[Recipe]
     days: List[DayMeal]
+
+
+class MealPlanUpdate(BaseModel):
+    meal_plan: str
+
